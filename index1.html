@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WinMix - Advanced Sports Prediction System">
+    <meta name="theme-color" content="#CCFF00">
+    <title>WinMix Prediction System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://resources.premierleague.com">
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        .animate-cardAppear {
+            animation: cardAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            will-change: transform, opacity;
+        }
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .select-wrapper {
+            position: relative;
+        }
+        .select-wrapper::after {
+            content: '';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #CCFF00;
+            pointer-events: none;
+        }
+        .match-card {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .animate-cardAppear {
+                animation: none;
+            }
+            .animate-spin {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-[#0A0A0A]/80 backdrop-blur-md border-b border-[#CCFF00]/20" role="banner">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-8">
+                    <div class="text-xl font-bold flex items-center gap-2">
+                        <button aria-label="Toggle menu" class="focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 rounded-lg">
+                            <i data-lucide="menu" class="w-6 h-6 text-[#CCFF00] cursor-pointer hover:text-[#CCFF00]/80 transition-colors"></i>
+                        </button>
+                        <span class="sr-only">WinMix</span>
+                        winmix<span class="text-[#CCFF00]">.hu</span>
+                    </div>
+                    <nav class="hidden md:flex items-center gap-6" role="navigation" aria-label="Main navigation">
+                        <a href="#" class="text-white/60 hover:text-[#CCFF00] transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 rounded-lg px-2 py-1">Dashboard</a>
+                        <a href="#" class="text-white/60 hover:text-[#CCFF00] transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 rounded-lg px-2 py-1">Predictions</a>
+                        <a href="#" class="text-white/60 hover:text-[#CCFF00] transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 rounded-lg px-2 py-1">Statistics</a>
+                        <a href="#" class="text-white/60 hover:text-[#CCFF00] transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 rounded-lg px-2 py-1">History</a>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button aria-label="Notifications" class="p-2 rounded-full hover:bg-white/5 transition-colors relative focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                        <i data-lucide="bell" class="w-5 h-5 text-white/60"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-[#CCFF00] rounded-full"></span>
+                        <span class="sr-only">3 unread notifications</span>
+                    </button>
+                    <button aria-label="Settings" class="p-2 rounded-full hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                        <i data-lucide="settings" class="w-5 h-5 text-white/60"></i>
+                    </button>
+                    <div class="flex items-center gap-3 pl-4 border-l border-white/10">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-sm font-medium">John Doe</div>
+                            <div class="text-xs text-white/60">Premium User</div>
+                        </div>
+                        <button aria-label="User profile" class="w-10 h-10 rounded-full bg-[#CCFF00]/20 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                            <i data-lucide="user" class="w-5 h-5 text-[#CCFF00]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 flex-grow" role="main">
+        <!-- Prediction Control Panel -->
+        <div class="bg-white/5 rounded-2xl p-6 mb-8" role="region" aria-label="Prediction Control Panel">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Prediction Control Panel</h2>
+                    <p class="text-sm text-white/60 mt-1">Manage and analyze your predictions</p>
+                </div>
+                <button aria-label="Panel settings" class="p-2 rounded-lg hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                    <i data-lucide="settings-2" class="w-5 h-5 text-white/60"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="space-y-2">
+                    <label for="predictionModel" class="block text-sm font-medium text-white/60">Prediction Model</label>
+                    <select id="predictionModel" class="w-full p-3 bg-[#141414] border border-[#CCFF00]/20 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 transition-all">
+                        <option value="combined">Combined Analysis</option>
+                        <option value="statistical">Statistical</option>
+                        <option value="ml">Machine Learning</option>
+                        <option value="historical">Historical Data</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="timeRange" class="block text-sm font-medium text-white/60">Time Range</label>
+                    <select id="timeRange" class="w-full p-3 bg-[#141414] border border-[#CCFF00]/20 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 transition-all">
+                        <option value="all">All Time</option>
+                        <option value="1y">Last Year</option>
+                        <option value="6m">Last 6 Months</option>
+                        <option value="3m">Last 3 Months</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="confidenceLevel" class="block text-sm font-medium text-white/60">Confidence Level</label>
+                    <select id="confidenceLevel" class="w-full p-3 bg-[#141414] border border-[#CCFF00]/20 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 transition-all">
+                        <option value="all">All Predictions</option>
+                        <option value="high">High Confidence (80%+)</option>
+                        <option value="medium">Medium Confidence (50-80%)</option>
+                        <option value="low">Low Confidence (Below 50%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 mt-6 pt-6 border-t border-white/10">
+                <button class="flex items-center gap-2 px-4 py-2 bg-[#CCFF00] text-black font-medium rounded-lg hover:bg-[#CCFF00]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <span>Refresh Predictions</span>
+                </button>
+
+                <button class="flex items-center gap-2 px-4 py-2 bg-white/5 text-white font-medium rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    <span>Filters</span>
+                </button>
+
+                <div class="flex-1"></div>
+
+                <button class="flex items-center gap-2 px-4 py-2 bg-white/5 text-white font-medium rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Export</span>
+                </button>
+
+                <button class="flex items-center gap-2 px-4 py-2 bg-white/5 text-white font-medium rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <span>Share</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Match Selection -->
+        <div id="matchSelection" class="space-y-6" role="region" aria-label="Match Selection">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-[#CCFF00]">Select Matches</h2>
+                <div class="flex items-center gap-4">
+                    <button onclick="clearAllMatches()" class="flex items-center gap-2 px-4 py-2 bg-white/5 text-white font-medium rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <span>Clear All</span>
+                    </button>
+                    <button onclick="addMatch()" class="flex items-center gap-2 px-4 py-2 bg-[#CCFF00]/20 text-[#CCFF00] font-medium rounded-lg hover:bg-[#CCFF00]/30 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Add Match</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white/5 rounded-2xl p-4">
+                <div class="flex items-center gap-4 mb-4">
+                    <i data-lucide="info" class="w-5 h-5 text-[#CCFF00]"></i>
+                    <p class="text-sm text-white/60">Select teams for each match. Teams can only be selected once across all matches.</p>
+                </div>
+                
+                <div id="selectedMatchesList" class="space-y-4" role="list">
+                    <!-- Selected matches will be displayed here -->
+                </div>
+            </div>
+            
+            <button id="runPredictions" class="w-full mt-8 py-4 bg-[#CCFF00] text-black font-bold rounded-xl hover:bg-[#CCFF00]/90 transition-colors disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50">
+                Run Predictions
+            </button>
+        </div>
+
+        <!-- Prediction Results -->
+        <div id="predictionResults" class="mt-12 space-y-6 hidden" role="region" aria-label="Prediction Results">
+            <h2 class="text-2xl font-bold mb-6 text-[#CCFF00]">Prediction Results</h2>
+            <div id="predictionGrid" class="grid gap-6 lg:grid-cols-2" role="list">
+                <!-- Prediction cards will be inserted here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#0A0A0A]/80 backdrop-blur-md border-t border-[#CCFF00]/20 py-4" role="contentinfo">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2023 WinMix. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50 hidden" role="alert" aria-label="Loading predictions">
+        <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[#CCFF00]"></div>
+    </div>
+
+    <script>
+        // Team configurations
+        const teamConfig = {
+            "Vörös Ördögök": {"logo": "https://resources.premierleague.com/premierleague/badges/t1.svg", "color": "#DA291C"},
+            "Chelsea": {"logo": "https://resources.premierleague.com/premierleague/badges/t8.svg", "color": "#034694"},
+            "Liverpool": {"logo": "https://resources.premierleague.com/premierleague/badges/t14.svg", "color": "#C8102E"},
+            "Manchester Kék": {"logo": "https://resources.premierleague.com/premierleague/badges/t43.svg", "color": "#6CABDD"},
+            "Everton": {"logo": "https://resources.premierleague.com/premierleague/badges/t11.svg", "color": "#003399"},
+            "Brentford": {"logo": "https://resources.premierleague.com/premierleague/badges/t94.svg", "color": "#E30613"},
+            "Crystal Palace": {"logo": "https://resources.premierleague.com/premierleague/badges/t31.svg", "color": "#1B458F"},
+            "Fulham": {"logo": "https://resources.premierleague.com/premierleague/badges/t54.svg", "color": "#000000"},
+            "Wolverhampton": {"logo": "https://resources.premierleague.com/premierleague/badges/t39.svg", "color": "#FDB913"},
+            "London Ágyúk": {"logo": "https://resources.premierleague.com/premierleague/badges/t3.svg", "color": "#EF0107"},
+            "Brighton": {"logo": "https://resources.premierleague.com/premierleague/badges/t36.svg", "color": "#0057B8"},
+            "Nottingham": {"logo": "https://resources.premierleague.com/premierleague/badges/t17.svg", "color": "#DD0000"},
+            "Tottenham": {"logo": "https://resources.premierleague.com/premierleague/badges/t6.svg", "color": "#132257"},
+            "Newcastle": {"logo": "https://resources.premierleague.com/premierleague/badges/t4.svg", "color": "#241F20"},
+            "West Ham": {"logo": "https://resources.premierleague.com/premierleague/badges/t21.svg", "color": "#7A263A"},
+            "Aston Oroszlán": {"logo": "https://resources.premierleague.com/premierleague/badges/t7.svg", "color": "#670E36"}
+        };
+
+        // Constants
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        const MATCH_SLOTS = 8;
+        const API_BASE_URL = 'prediction.php';
+
+        // State management
+        let selectedMatches = [];
+        let predictions = [];
+        const cache = new Map();
+
+        // Utility functions
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Error handling
+        class PredictionError extends Error {
+            constructor(message, code) {
+                super(message);
+                this.name = 'PredictionError';
+                this.code = code;
+            }
+        }
+
+        function handleError(error) {
+            console.error('Error:', error);
+            const message = error instanceof PredictionError 
+                ? error.message 
+                : 'An unexpected error occurred. Please try again.';
+            
+            // Show error message to user
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg animate-cardAppear';
+            errorDiv.role = 'alert';
+            errorDiv.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                errorDiv.style.opacity = '0';
+                setTimeout(() => errorDiv.remove(), 300);
+            }, 5000);
+        }
+
+        // Match management
+        function addMatch() {
+            if (selectedMatches.length < MATCH_SLOTS) {
+                selectedMatches.push({ homeTeam: null, awayTeam: null });
+                updateMatchesDisplay();
+            } else {
+                handleError(new PredictionError('Maximum number of matches reached', 'MAX_MATCHES'));
+            }
+        }
+
+        function removeMatch(index) {
+            selectedMatches.splice(index, 1);
+            updateMatchesDisplay();
+        }
+
+        function clearAllMatches() {
+            selectedMatches = [];
+            updateMatchesDisplay();
+            document.getElementById('predictionResults').classList.add('hidden');
+        }
+
+        // Team selection handling
+        function handleTeamSelect(index, position, teamName) {
+            try {
+                if (!teamName) {
+                    throw new PredictionError('Please select a team', 'NO_TEAM_SELECTED');
+                }
+
+                const team = teamConfig[teamName];
+                if (!team) throw new PredictionError('Invalid team selection', 'INVALID_TEAM');
+
+                const isTeamAlreadySelected = selectedMatches.some((match, i) => 
+                    i !== index && (match?.homeTeam === teamName || match?.awayTeam === teamName)
+                );
+
+                if (isTeamAlreadySelected) {
+                    throw new PredictionError('Team already selected in another match', 'TEAM_ALREADY_SELECTED');
+                }
+
+                selectedMatches[index] = {
+                    ...selectedMatches[index],
+                    [position === 'home' ? 'homeTeam' : 'awayTeam']: teamName
+                };
+
+                updateMatchesDisplay();
+            } catch (error) {
+                handleError(error);
+            }
+        }
+
+        // UI updates
+        function renderMatch(match, index) {
+            const matchEl = document.createElement('div');
+            matchEl.className = 'bg-white/5 p-4 rounded-xl border border-white/10 hover:border-[#CCFF00]/20 transition-colors animate-cardAppear';
+            matchEl.setAttribute('role', 'listitem');
+            
+            matchEl.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="trophy" class="w-4 h-4 text-[#CCFF00]"></i>
+                        <span class="text-sm font-medium text-white/60">Match #${index + 1}</span>
+                    </div>
+                    <button 
+                        onclick="removeMatch(${index})" 
+                        class="p-1 hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50"
+                        aria-label="Remove match"
+                    >
+                        <i data-lucide="x" class="w-4 h-4 text-white/60"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-[1fr,auto,1fr] gap-4 items-center">
+                    <div class="select-wrapper">
+                        <label for="homeTeam${index}" class="sr-only">Home Team</label>
+                        <select 
+                            id="homeTeam${index}"
+                            class="w-full p-3 bg-[#141414] border border-[#CCFF00]/20 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 transition-all"
+                            aria-label="Select home team"
+                            onchange="handleTeamSelect(${index}, 'home', this.value)"
+                        >
+                            <option value="">Select home team</option>
+                            ${Object.keys(teamConfig).map(team => `
+                                <option value="${team}" ${match.homeTeam === team ? 'selected' : ''}>
+                                    ${team}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="text-white/60 font-medium">VS</div>
+                    <div class="select-wrapper">
+                        <label for="awayTeam${index}" class="sr-only">Away Team</label>
+                        <select 
+                            id="awayTeam${index}"
+                            class="w-full p-3 bg-[#141414] border border-[#CCFF00]/20 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#CCFF00]/50 transition-all"
+                            aria-label="Select away team"
+                            onchange="handleTeamSelect(${index}, 'away', this.value)"
+                        >
+                            <option value="">Select away team</option>
+                            ${Object.keys(teamConfig).map(team => `
+                                <option value="${team}" ${match.awayTeam === team ? 'selected' : ''}>
+                                    ${team}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+            `;
+            
+            return matchEl;
+        }
+
+        function updateMatchesDisplay() {
+            const container = document.getElementById('selectedMatchesList');
+            if (!container) {
+                console.error('Selected matches container not found');
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            selectedMatches.forEach((match, index) => {
+                if (match) {
+                    container.appendChild(renderMatch(match, index));
+                }
+            });
+            
+            lucide.createIcons();
+            updateRunPredictionsButton();
+            updateTeamSelects();
+        }
+
+        function updateTeamSelects() {
+            selectedMatches.forEach((currentMatch, currentIndex) => {
+                const homeSelect = document.getElementById(`homeTeam${currentIndex}`);
+                const awaySelect = document.getElementById(`awayTeam${currentIndex}`);
+
+                if (!homeSelect || !awaySelect) return;
+
+                Object.keys(teamConfig).forEach(team => {
+                    const isSelected = selectedMatches.some((match, index) => 
+                        index !== currentIndex && (
+                            match?.homeTeam === team || 
+                            match?.awayTeam === team
+                        )
+                    );
+
+                    const homeOption = homeSelect.querySelector(`option[value="${team}"]`);
+                    const awayOption = awaySelect.querySelector(`option[value="${team}"]`);
+
+                    if (homeOption) {
+                        homeOption.disabled = isSelected && currentMatch?.homeTeam !== team;
+                    }
+                    if (awayOption) {
+                        awayOption.disabled = isSelected && currentMatch?.awayTeam !== team;
+                    }
+                });
+            });
+        }
+
+        function updateRunPredictionsButton() {
+            const button = document.getElementById('runPredictions');
+            const hasValidMatch = selectedMatches.some(match => match?.homeTeam && match?.awayTeam);
+            button.disabled = !hasValidMatch;
+            button.setAttribute('aria-disabled', !hasValidMatch);
+        }
+
+        // API interaction
+        async function fetchPrediction(match) {
+            const cacheKey = `${match.homeTeam}-${match.awayTeam}`;
+            const cached = cache.get(cacheKey);
+            
+            if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+                return cached.data;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    home_team: match.homeTeam,
+                    away_team: match.awayTeam
+                });
+
+                const response = await fetch(`${API_BASE_URL}?${params}`);
+                if (!response.ok) {
+                    throw new PredictionError('Failed to fetch prediction', 'API_ERROR');
+                }
+                
+                const data = await response.json();
+                cache.set(cacheKey, {
+                    data,
+                    timestamp: Date.now()
+                });
+                
+                return data;
+            } catch (error) {
+                throw new PredictionError(
+                    'Failed to fetch prediction. Please try again later.',
+                    'FETCH_ERROR'
+                );
+            }
+        }
+
+        // Prediction handling
+        async function runPredictions() {
+            const validMatches = selectedMatches.filter(match => match?.homeTeam && match?.awayTeam);
+            if (validMatches.length === 0) return;
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            loadingSpinner.classList.remove('hidden');
+            
+            try {
+                const predictions = await Promise.all(validMatches.map(async match => {
+                    const response = await fetch('prediction.php', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                        cache: 'no-cache',
+                        params: new URLSearchParams({
+                            home_team: match.homeTeam,
+                            away_team: match.awayTeam
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new PredictionError('Failed to fetch prediction', 'API_ERROR');
+                    }
+
+                    return await response.json();
+                }));
+
+                displayPredictions(predictions);
+            } catch (error) {
+                handleError(error);
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        function displayPredictions(predictions) {
+            const predictionResults = document.getElementById('predictionResults');
+            const predictionGrid = document.getElementById('predictionGrid');
+            
+            predictionGrid.innerHTML = '';
+            predictions.forEach((prediction, index) => {
+                const card = document.createElement('div');
+                card.className = 'prediction-card bg-white/5 rounded-2xl p-6 animate-cardAppear';
+                card.setAttribute('role', 'listitem');
+                card.setAttribute('aria-label', `Prediction for ${prediction.match.home_team} vs ${prediction.match.away_team}`);
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-4">
+                            <div class="flex flex-col items-center">
+                                <img 
+                                    src="${teamConfig[prediction.match.home_team].logo}" 
+                                    alt="${prediction.match.home_team} logo" 
+                                    class="w-12 h-12 mb-2"
+                                    loading="lazy"
+                                >
+                                <span class="text-sm" style="color: ${teamConfig[prediction.match.home_team].color}">${prediction.match.home_team}</span>
+                            </div>
+                            <div class="text-2xl font-bold">VS</div>
+                            <div class="flex flex-col items-center">
+                                <img 
+                                    src="${teamConfig[prediction.match.away_team].logo}" 
+                                    alt="${prediction.match.away_team} logo" 
+                                    class="w-12 h-12 mb-2"
+                                    loading="lazy"
+                                >
+                                <span class="text-sm" style="color: ${teamConfig[prediction.match.away_team].color}">${prediction.match.away_team}</span>
+                            </div>
+                        </div>
+                 Continuing the file content exactly where it left off:
+
+                        <div class="text-center px-4 py-2 bg-[#CCFF00]/10 rounded-xl">
+                            <div class="text-2xl font-bold text-[#CCFF00]">${prediction.confidence.toFixed(2)}%</div>
+                            <div class="text-sm text-white/60">Confidence</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="text-center p-3 bg-white/5 rounded-xl">
+                            <div class="text-xl font-bold">${prediction.head_to_head.home_wins}</div>
+                            <div class="text-sm text-white/60">Home Wins</div>
+                        </div>
+                        <div class="text-center p-3 bg-white/5 rounded-xl">
+                            <div class="text-xl font-bold">${prediction.head_to_head.draws}</div>
+                            <div class="text-sm text-white/60">Draws</div>
+                        </div>
+                        <div class="text-center p-3 bg-white/5 rounded-xl">
+                            <div class="text-xl font-bold">${prediction.head_to_head.away_wins}</div>
+                            <div class="text-sm text-white/60">Away Wins</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-white/60">Both Teams to Score</span>
+                                <span class="text-sm font-medium">${prediction.both_teams_to_score.probability}%</span>
+                            </div>
+                            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div 
+                                    class="h-full bg-[#CCFF00] transition-all duration-500" 
+                                    style="width: ${prediction.both_teams_to_score.probability}%"
+                                    role="progressbar"
+                                    aria-valuenow="${prediction.both_teams_to_score.probability}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-sm text-white/60">Home Win</span>
+                                    <span class="text-sm font-medium">${prediction.home_win_probability}%</span>
+                                </div>
+                                <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div 
+                                        class="h-full bg-[#CCFF00] transition-all duration-500" 
+                                        style="width: ${prediction.home_win_probability}%"
+                                        role="progressbar"
+                                        aria-valuenow="${prediction.home_win_probability}"
+                                        aria-valuemin="0"
+                                        aria-valuemax="100"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-white/5 rounded-xl">
+                            <h3 class="text-lg font-medium mb-3">Detailed Statistics</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-sm text-white/60 mb-2">Expected Goals</div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg font-medium">${prediction.expected_goals.home.toFixed(2)}</span>
+                                        <span class="text-lg font-medium">${prediction.expected_goals.away.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-white/60 mb-2">Clean Sheet Probability</div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg font-medium">${prediction.clean_sheet_probability.home}%</span>
+                                        <span class="text-lg font-medium">${prediction.clean_sheet_probability.away}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                predictionGrid.appendChild(card);
+            });
+            
+            predictionResults.classList.remove('hidden');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            addMatch();
+            document.getElementById('runPredictions').addEventListener('click', runPredictions);
+            lucide.createIcons({
+                attrs: {
+                    stroke: 'currentColor',
+                    'stroke-width': '2',
+                    'stroke-linecap': 'round',
+                    'stroke-linejoin': 'round'
+                }
+            });
+        });
+    </script>
+</body>
+</html>
